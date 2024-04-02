@@ -1,0 +1,278 @@
+---
+title: "HW_4_Durinyan"
+output: html_document
+date: "2024-04-01"
+---
+
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+### Задание 1
+
+* Рассмотрите следующую статистическую гипотезу.
+
+Проводят некоторое исследование пациентов с артериальной гипертензией. Предположим, что внедрение нового препарата в среднем лучше снижает их давление по сравнению со стандартной терапией.
+
+* Задайте seed для воспроизводимости результатов (функция set.seed()). Задайте размер выборки sample_size <- 30. Задайте значение среднего артериального давления до приема нового препарата и после.
+
+
+```{r}
+set.seed(15)
+sample_size <- 30
+
+mean_bp_before <- 140
+mean_bp_after <- 130
+
+sd_bp_before <- 10
+bp_before <- rnorm(sample_size, mean_bp_before, sd_bp_before)
+
+sd_bp_after <- 6
+bp_after <- rnorm(sample_size, mean_bp_after, sd_bp_after)
+
+#bp_data <- data_frame(BP_BEFORE = bp_before, BP_AFTER = bp_after) deprecated!
+
+bp_data <- tibble(BP_BEFORE = bp_before, BP_AFTER = bp_after)
+
+print(bp_data)
+```
+
+
+* Сформулируйте нулевую и альтернативную гипотезы.
+
+H0 - прием препарата не влияет на уровень АД
+H1 - прием препарата влияет на уровень АД
+
+* Определите уровень значимости.
+
+```{r}
+alpha <- 0.05
+```
+
+* Выберите статистический тест для проверки гипотезы и аргументируйте свой выбор.
+
+Проверка респределения данных
+
+```{r}
+ggplot(
+  data = bp_data,
+  mapping = aes(x = bp_before)
+  ) +
+  geom_histogram(
+    binwidth = 7, 
+    fill = 'lightgreen', 
+    color = 'black'
+    ) +
+  labs(
+    title = "Распределение АД до гипотензивного терапии",
+    x = "Давление",
+    y = "Частота"
+    ) +
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.background = element_blank(), 
+        axis.line = element_line(linewidth = 2, colour = "grey")
+        )
+```
+Визуально распределение ненормальноеное.
+
+```{r}
+ggplot(
+  data = bp_data,
+  mapping = aes(x = bp_after)
+  ) +
+  geom_histogram(
+    binwidth = 5, 
+    fill = 'lightgreen', 
+    color = 'black'
+    ) +
+  labs(
+    title = "Распределение АД после антигипертензивной терапии",
+    x = "Давление",
+    y = "Частота"
+    ) +
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.background = element_blank(), 
+        axis.line = element_line(linewidth = 2, colour = "grey")
+        )
+```
+Визуально распределение ненормальноеное.
+
+
+Используем тест Шапиро-Уилка
+
+
+H0 - распределение нормальное
+H1 - распределение отличается от нормального
+
+```{r}
+shapiro.test(bp_data$BP_BEFORE)
+shapiro.test(bp_data$BP_AFTER)
+```
+BP_BEFORE p-value = 0.582
+BP_AFTER  p-value = 0.7568
+p-value > alpha в обоих случаях. Значит нулевая гипотеза не может быть отвергнута, распределение нормальное. Можем использовать Т-тест.
+
+```{r}
+t.test(bp_data$BP_BEFORE, bp_data$BP_AFTER, paired = TRUE)
+```
+p-value = 9.104e-06
+Доверительный интервал (95%) находится между 5,98 и 13,34, средняя разница 9,66. Кол-во степеней свободы = 29
+
+
+
+* Определите наблюдаемое значение статистики, а также критическое значение статистики.
+
+```{r}
+qt(1 - alpha/2, df = 29)
+```
+Наблюдаемое значение статистики = 5.37
+Критическое занчение статистики = 2.05
+
+
+* Оцените и прокомментируйте статистическую значимость.
+
+p-value > alpha, нулевая гипотеза отвергнута. Принимаем альтернативную гипотезу: разница в уровне АД после антигипертензивной терапии статистически значима.
+
+
+### Задание 2
+
+Рассмотрите следующую статистическую гипотезу.
+
+Существует некоторая связь между курением и развитием рака легких. Пусть у курящих людей вероятность заболеть раком легких составляет 0.8, а у некурящих — 0.2
+
+Рассмотрите два случая: для выборки sample_size1 <- 100 и выборки sample_size2 <- 30. Сгенерируйте данные по курению с помощью функции rep(), пусть отношение числа курящих к некурящим в каждой выборке составляет 1:1.
+
+
+```{r}
+sample_size1 <- 100
+sample_size2 <- 30
+
+sample_size <- sample_size1
+
+smoke_data <- rep(c(1, 0), each = (sample_size / 2))
+
+set.seed(15)
+sick_smoker <- rbinom((sample_size / 2), 1, 0.8)
+sick_nonsmoker <- rbinom((sample_size / 2), 1, 0.2)
+
+cancer_data <- c(sick_smoker, sick_nonsmoker)
+
+sample1 <- data.frame(SMOKER = smoke_data, CANCER = cancer_data)
+
+head(sample1)
+```
+```{r}
+sample_size <- sample_size2
+
+smoke_data <- rep(c(1, 0), each = (sample_size / 2))
+
+set.seed(1)
+sick_smoker <- rbinom((sample_size / 2), 1, 0.8)
+sick_nonsmoker <- rbinom((sample_size / 2), 1, 0.2)
+
+cancer_data <- c(sick_smoker, sick_nonsmoker)
+
+sample2 <- data.frame(SMOKER = smoke_data, CANCER = cancer_data)
+
+head(sample2)
+```
+
+
+
+Затем:
+
+* Сформулируйте нулевую и альтернативную гипотезы.
+
+H0 - курение не влияет на развитие рака легких (статистически незначимой разницы в развитии рака легких в обеих группах нет)
+H1 - курение оказывает влияение на развитие рака легких
+
+
+* Определите уровень значимости.
+
+
+```{r}
+alpha <- 0.05
+```
+
+
+* Выберите статистический тест для проверки гипотезы и аргументируйте свой выбор.
+
+
+```{r}
+barplot(
+  table(
+    sample1$SMOKER, sample1$CANCER
+    ), 
+  beside = TRUE, 
+  col = c("blue", "red"), 
+  legend = c("Нет рака легких", "Рак легких"),
+  names.arg = c("Некурящие", "Курящие"), 
+  main = "Рак легких среди курящих и некурящих людей (выборка 100)",
+  ylab = "Количество наблюдений"
+  )
+```
+
+```{r}
+barplot(
+  table(
+    sample2$SMOKER, sample2$CANCER
+    ), 
+  beside = TRUE, 
+  col = c("blue", "red"), 
+  legend = c("Нет рака легких", "Рак легких"),
+  names.arg = c("Некурящие", "Курящие"), 
+  main = "Рак легких среди курящих и некурящих людей (выборка 30)",
+  ylab = "Количество наблюдений"
+  )
+```
+
+
+
+
+
+
+
+
+
+Определите наблюдаемое значение статистики, а также критическое значение статистики.
+Оцените и прокомментируйте статистическую значимость.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
