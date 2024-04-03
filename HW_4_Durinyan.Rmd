@@ -42,8 +42,8 @@ print(bp_data)
 
 * Сформулируйте нулевую и альтернативную гипотезы.
 
-H0 - прием препарата не влияет на уровень АД
-H1 - прием препарата влияет на уровень АД
+H0 - прием препарата не влияет на уровень АД по сравнению со стандартной терапией
+H1 - прием препарата сильнее влияет на уровень АД по сравнению со стандартной терапией
 
 * Определите уровень значимости.
 
@@ -151,7 +151,7 @@ sample_size2 <- 30
 
 sample_size <- sample_size1
 
-smoke_data <- rep(c(1, 0), each = (sample_size / 2))
+smokers_data <- rep(c(1, 0), each = (sample_size / 2))
 
 set.seed(15)
 sick_smoker <- rbinom((sample_size / 2), 1, 0.8)
@@ -159,7 +159,7 @@ sick_nonsmoker <- rbinom((sample_size / 2), 1, 0.2)
 
 cancer_data <- c(sick_smoker, sick_nonsmoker)
 
-sample1 <- data.frame(SMOKER = smoke_data, CANCER = cancer_data)
+sample1 <- data.frame(SMOKER = smokers_data, CANCER = cancer_data)
 
 head(sample1)
 ```
@@ -206,7 +206,7 @@ barplot(
     sample1$SMOKER, sample1$CANCER
     ), 
   beside = TRUE, 
-  col = c("blue", "red"), 
+  col = c("lightgreen", "red"), 
   legend = c("Нет рака легких", "Рак легких"),
   names.arg = c("Некурящие", "Курящие"), 
   main = "Рак легких среди курящих и некурящих людей (выборка 100)",
@@ -220,29 +220,210 @@ barplot(
     sample2$SMOKER, sample2$CANCER
     ), 
   beside = TRUE, 
-  col = c("blue", "red"), 
+  col = c("lightgreen", "red"), 
   legend = c("Нет рака легких", "Рак легких"),
   names.arg = c("Некурящие", "Курящие"), 
   main = "Рак легких среди курящих и некурящих людей (выборка 30)",
   ylab = "Количество наблюдений"
   )
 ```
+Распределение неравномерно изначально по учловию задачи
+Обе переменные категориальные
+Наблюдения независимы между собой
 
+Можно взять тест Фишера
 
+```{r}
+contingency_table100 <- table(sample1$SMOKER, sample1$CANCER)
 
+fisher100 <- fisher.test(contingency_table100, alternative = 'greater')
 
+fisher100
+```
 
+```{r}
+contingency_table30 <- table(sample2$SMOKER, sample2$CANCER)
 
+fisher30 <- fisher.test(contingency_table30, alternative = 'greater')
 
-
+fisher30
+```
 
 Определите наблюдаемое значение статистики, а также критическое значение статистики.
 Оцените и прокомментируйте статистическую значимость.
 
 
+В обоих случаях p-value < alpha, значит нулевая гипотеза отвергнута - риск заболеть раком легких статистически выше в группе курящих.
 
 
+### Задание 3
 
+Рассмотрите следующую статистическую гипотезу.
+
+Применение нового метода лечения синдрома раздраженного кишечника значимо меняет уровень болевых симптомов по сравнению с группой, прошедшей лечение диетотерапией.
+
+Исследователь избегает любых допущений, кроме того, что выборки независимы и имеют одинаковое распределение.
+
+
+```{r}
+
+set.seed(75)
+
+treatment_group <- rnorm(50, mean = 4, sd = 2)
+diet_group <- rnorm(50, mean = 5, sd = 2)
+
+research_data <- data.frame(TREATMENT = treatment_group, DIET = diet_group)
+
+head(research_data)
+
+```
+
+* Сформулируйте нулевую и альтернативную гипотезы.
+
+H0 - Применение нового метода лечения не влияет на уровень болевых симптомов по сравнению с группой, прошедшей лечение диетотерапией.
+H1 - Применение нового метода лечения значимо влияет на уровень болевых симптомов по сравнению с группой, прошедшей лечение диетотерапией.
+
+* Определите уровень значимости.
+
+```{r}
+alpha <- 0.05
+```
+
+
+* Выберите статистический тест для проверки гипотезы и аргументируйте свой выбор.
+
+```{r}
+ggplot(
+  research_data, 
+  aes(
+    x = TREATMENT
+  )
+) +
+  geom_histogram(
+    binwidth = 1,
+    fill = 'lightblue',
+    color = 'black'
+  ) +
+  labs(
+    title = 'Уровень боли при новомодном лечении',
+    x = 'Уровень боли',
+    y = 'Частота'
+  ) +
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.background = element_blank(), 
+        axis.line = element_line(linewidth = 2, colour = "grey")
+        )
+```
+
+```{r}
+ggplot(
+  research_data, 
+  aes(
+    x = DIET
+  )
+) +
+  geom_histogram(
+    binwidth = 1,
+    fill = 'lightblue',
+    color = 'black'
+  ) +
+  labs(
+    title = 'Уровень боли при новомодном лечении',
+    x = 'Уровень боли',
+    y = 'Частота'
+  ) +
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.background = element_blank(), 
+        axis.line = element_line(linewidth = 2, colour = "grey")
+        )
+```
+Оба распределения ненормальные
+
+Тест на нормальность распределения 
+
+```{r}
+shapiro.test(research_data$TREATMENT)
+shapiro.test(research_data$DIET)
+```
+В обоих случаях p-value > alpha Распределение номальное.
+
+Боль - дискретная характеристика
+Выборки независимые
+
+Выбираем тест Манна-Уитни
+
+```{r}
+wilcox.test(research_data$TREATMENT, research_data$DIET, alternative = 'two.sided', exact = FALSE)
+```
+
+* Определите наблюдаемое значение статистики, а также критическое значение статистики.
+
+наблюдаемое значение статистики = 815
+
+
+* Оцените и прокомментируйте статистическую значимость.
+
+p-value < alpha
+Нулевая гипотеза может быть отклонена. Принимаем альтернативную гипотезу - Применение нового метода лечения синдрома раздраженного кишечника значимо меняет уровень болевых симптомов по сравнению с группой, прошедшей лечение диетотерапией.
+
+
+### Задание 4
+
+Рассмотрите следующую гипотезу.
+
+Проводится исследование, в котором исследуются три противоопухолевые препарата A, B плацебо (0) на трех группах мышей. В каждой из трех групп по 10 мышей.  Оценивается размер опухоли у мыши.
+
+```{r}
+tumor <- tibble(
+  therapy = c(rep("0", 10), rep("A", 10), rep("B", 10)),
+  value = c(rep(3213, 10), rep(2687, 10), rep(2423, 10))
+) %>%
+  mutate(therapy = factor(therapy, levels = c("0", "A", "B")))
+tumor$value <- tumor$value + rnorm(30, 0, 760)
+```
+
+* Постройте на одном графике три «ящика с усами» для наглядности.
+
+```{r}
+ggplot(
+  tumor,
+  aes(
+    x = therapy,
+    y = value,
+    fill = therapy
+  )
+) +
+  geom_boxplot() +
+  labs(
+    title = "Размер опухоли у мыши в зависимости от препарата",
+    x = "Препарат",
+    y = "Размер опухоли"
+  ) + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.background = element_blank(), 
+        axis.line = element_line(linewidth = 2, colour = "grey")
+        )
+```
+
+* Проведите дисперсионный анализ, чтобы выяснить, есть ли разница между размером опухоли во всех группах. 
+
+```{r}
+anova_result <- aov(value ~ therapy, data = tumor)
+summary(anova_result)
+```
+* Прокомментируйте получившийся результат.
+
+p-value < alpha - мы можем утверждать, что есть статистически значимые различия между группами.
+
+
+* С помощью функции TukeyHSD() проведите попарные сравнения, используя критерий Тьюки.
+
+```{r}
+TukeyHSD(anova_result)
+```
+* Прокомментируйте полученные результаты.
+
+Только сравнении группе В-0 получены статистически значимые результаты (p = 0,0046). Остальные сравнения статистически незначимы (p > 0.05).
 
 
 
